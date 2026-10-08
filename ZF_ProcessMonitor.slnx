@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ZF_ProcessMonitor/ZF_ProcessMonitor.csproj" />
+    <Project Path="src/ZF_ProcessMonitorWin/ZF_ProcessMonitorWin.csproj" />
+  </Folder>
+</Solution>
