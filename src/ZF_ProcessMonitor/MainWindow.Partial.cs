@@ -40,6 +40,7 @@ public partial class MainWindow
         });
         SplitView splitView = new SplitView().With(x =>
         {
+            x.DisplayMode = SplitViewDisplayMode.Inline;
             x.Docking = Dock.Fill;
         });
         _dataGridView = new DataGridView().With(x =>
@@ -49,11 +50,13 @@ public partial class MainWindow
             x.Docking = Dock.Fill;
         });
         SplitViewItem processView = new SplitViewItem("Processes", content: () => _dataGridView);
-        splitView.Items.AddRange([processView]);
+        SplitViewItem startupView = new SplitViewItem("Startup", content: () => _dataGridView);
+        splitView.Items.AddRange([processView, startupView]);
         _dataGridView.Columns.AddRange(
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).ProcessId, Header = nameof(ProcessData.ProcessId) },
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).ProcessName, Header = nameof(ProcessData.ProcessName) },
-            new DataGridViewColumn() { Value = (x) => ((ProcessData)x).UsedRam, Header = nameof(ProcessData.UsedRam) },
+            new DataGridViewColumn() { Value = (x) => RamToStr(((ProcessData)x).UsedRam), Header = nameof(ProcessData.UsedRam) },
+            new DataGridViewColumn() { Value = (x) => ((ProcessData)x).X64, Header = nameof(ProcessData.X64) },
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).MainWindowTitle, Header = nameof(ProcessData.MainWindowTitle) },
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).MainWindowHandle, Header = nameof(ProcessData.MainWindowHandle) }
         );
