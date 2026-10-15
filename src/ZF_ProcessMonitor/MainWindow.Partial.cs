@@ -83,8 +83,8 @@ public partial class MainWindow
             x.Docking = Dock.Fill;
         });
         _gridStartup.Columns.AddRange(
-            new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).FullPath, Header = nameof(StartupEntry.FullPath) },
-            new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).Arguments, Header = nameof(StartupEntry.Arguments) }
+            new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).Source, Header = nameof(StartupEntry.Source) },
+            new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).Name, Header = nameof(StartupEntry.Name) }
         );
     }
 }

@@ -8,6 +8,7 @@ using ZeppelinForms.Forms.Controls.DataGrid;
 using ZeppelinForms.Forms.Controls.Text;
 using ZeppelinForms.Forms.Enums;
 using ZF_ProcessMonitor.Models;
+using ZF_ProcessMonitor.Startup;
 using ZF_ProcessMonitor.Win32API;
 
 namespace ZF_ProcessMonitor;
@@ -27,9 +28,19 @@ public partial class MainWindow : Form
     private void MainWindow_Shown(object? sender, EventArgs e)
     {
         FirstProcessFind();
+        UpdateStartups();
         _timer = new(TimeSpan.FromSeconds(1));
         _timer.Elapsed += (_, _) => UpdateProcesses();
         _timer.Start();
+    }
+
+    private void UpdateStartups()
+    {
+        this.Invoke(() =>
+        {
+            _gridStartup.Items.AddRange(RegistrySearch.Find());
+            _gridStartup.Items.AddRange(AppSearch.Find());
+        });
     }
 
     private void FirstProcessFind()
@@ -60,8 +71,11 @@ public partial class MainWindow : Form
             proc.MainWindowTitle,
             proc.MainWindowHandle,
             _frame);
-        _gridProcesses.Items.Add(procData);
-        _processData.Add(proc.Id, procData);
+        this.Invoke(() =>
+        {
+            _gridProcesses.Items.Add(procData);
+            _processData.Add(proc.Id, procData);
+        });
     }
 
     private void UpdateProcesses()
@@ -79,7 +93,8 @@ public partial class MainWindow : Form
             RegisterProcess(proc);
         }
 
-        foreach (var procData in _processData.Values.Where(x => x.Frame < _frame))
+        var tempList = _processData.Values.Where(x => x.Frame < _frame).ToList();
+        foreach (var procData in tempList)
         {
             this.Invoke(() =>
             {

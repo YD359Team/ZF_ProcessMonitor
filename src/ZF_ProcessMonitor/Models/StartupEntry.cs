@@ -2,6 +2,12 @@
 
 public class StartupEntry
 {
-    public string FullPath { get; set; }
-    public string Arguments { get; set; }
+    public StartupEntry(string source, string name)
+    {
+        Source = source;
+        Name = name;
+    }
+
+    public string Source { get; set; }
+    public string Name { get; set; }
 }
