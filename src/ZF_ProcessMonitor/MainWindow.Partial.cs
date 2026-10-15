@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using ZeppelinForms;
 using ZeppelinForms.Core.Collections;
 using ZeppelinForms.Drawing.Primitives;
 using ZeppelinForms.Forms.Controls;
@@ -83,7 +84,7 @@ public partial class MainWindow
             x.Docking = Dock.Fill;
         });
         _gridStartup.Columns.AddRange(
-            new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).Source, Header = nameof(StartupEntry.Source) },
+            new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).Source, Header = nameof(StartupEntry.Source), },
             new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).Name, Header = nameof(StartupEntry.Name) }
         );
     }

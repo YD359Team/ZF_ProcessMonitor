@@ -3,4 +3,7 @@
     <Project Path="src/ZF_ProcessMonitor/ZF_ProcessMonitor.csproj" />
     <Project Path="src/ZF_ProcessMonitorWin/ZF_ProcessMonitorWin.csproj" />
   </Folder>
+  <Folder Name="/Элементы решения/">
+    <File Path="README.md" />
+  </Folder>
 </Solution>

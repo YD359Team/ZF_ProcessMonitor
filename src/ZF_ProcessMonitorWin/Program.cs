@@ -6,6 +6,6 @@ using ZF_ProcessMonitor;
 App app = new(new WindowsPlatform())
 {
     MainForm = new MainWindow(),
-    StartupTheme = Themes.FluentLight
+    StartupTheme = Themes.FluentLight,
 };
 app.Run();
