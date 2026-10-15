@@ -16,7 +16,9 @@ public partial class MainWindow : Form
 {
     private DataGridView _dataGridView;
 
-    private Dictionary<int, ProcessData> _processData = new(100);
+    private int _frame = 1;
+    private System.Timers.Timer _timer;
+    private readonly Dictionary<int, ProcessData> _processData = new(100);
 
     public MainWindow()
     {
@@ -27,9 +29,9 @@ public partial class MainWindow : Form
     private void MainWindow_Shown(object? sender, EventArgs e)
     {
         FirstProcessFind();
-        System.Timers.Timer timer = new(TimeSpan.FromSeconds(1));
-        timer.Elapsed += (_, _) => UpdateProcesses();
-        timer.Start();
+        _timer = new(TimeSpan.FromSeconds(1));
+        _timer.Elapsed += (_, _) => UpdateProcesses();
+        _timer.Start();
     }
 
     private void FirstProcessFind()
@@ -58,22 +60,31 @@ public partial class MainWindow : Form
             proc.WorkingSet64,
             x64str,
             proc.MainWindowTitle,
-            proc.MainWindowHandle);
+            proc.MainWindowHandle,
+            _frame);
         _dataGridView.Items.Add(procData);
         _processData.Add(proc.Id, procData);
     }
 
     private void UpdateProcesses()
     {
+        _frame++;
         foreach (var proc in Process.GetProcesses())
         {
             if (_processData.TryGetValue(proc.Id, out ProcessData? stored))
             {
                 stored.UsedRam = proc.WorkingSet64;
+                stored.Frame = _frame;
                 continue;
             }
 
             RegisterProcess(proc);
+        }
+
+        foreach (var procData in _processData.Values.Where(x => x.Frame < _frame))
+        {
+            _dataGridView.Items.Remove(procData);
+            _processData.Remove(procData.ProcessId);
         }
     }
 
@@ -83,19 +94,25 @@ public partial class MainWindow : Form
         const int MB = KB * 1024;
         const int GB = MB * 1024;
 
-        if (ramBytes < KB) return $"{ramBytes} b";
+        if (ramBytes < KB) return $"{ramBytes} B";
         if (ramBytes < MB)
         {
             long kb = ramBytes / KB;
-            return $"{kb}.{ramBytes % KB} kb";
+            return $"{kb}.{ramBytes % KB} KB";
         }
         if (ramBytes < GB)
         {
             long mb = ramBytes / MB;
-            return $"{mb}.{(ramBytes / KB) % MB} mb";
+            return $"{mb}.{(ramBytes / KB) % MB} MB";
         }
 
         long gb = ramBytes / GB;
-        return $"{gb}.{(ramBytes / MB) % GB} gb";
-    } 
+        return $"{gb}.{(ramBytes / MB) % GB} GB";
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _timer?.Dispose();
+        base.OnClosed(e);
+    }
 }
