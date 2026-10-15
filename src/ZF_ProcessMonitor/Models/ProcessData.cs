@@ -2,7 +2,7 @@
 
 public class ProcessData
 {
-    public ProcessData(int processId, string processName, long usedRam, string x64, string mainWindowTitle, nint mainWindowHandle, int frame)
+    public ProcessData(int processId, string processName, long usedRam, string x64, string mainWindowTitle, nint mainWindowHandle, long frame)
     {
         ProcessId = processId;
         ProcessName = processName;
@@ -19,5 +19,5 @@ public class ProcessData
     public string X64 { get; set; }
     public string MainWindowTitle { get; set; }
     public nint MainWindowHandle { get; set; }
-    public int Frame { get; set; }
+    public long Frame { get; set; }
 }

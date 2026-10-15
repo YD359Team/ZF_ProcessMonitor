@@ -14,6 +14,9 @@ namespace ZF_ProcessMonitor;
 
 public partial class MainWindow
 {
+    private DataGridView _gridProcesses;
+    private DataGridView _gridStartup;
+
     private void InitializeComponents()
     {
         this.Title = "ZF Process Monitor";
@@ -43,16 +46,25 @@ public partial class MainWindow
             x.DisplayMode = SplitViewDisplayMode.Inline;
             x.Docking = Dock.Fill;
         });
-        _dataGridView = new DataGridView().With(x =>
+
+        SetupGridProcesses();
+        SetupGridStartup();
+        SplitViewItem processView = new SplitViewItem("Processes", content: () => _gridProcesses);
+        SplitViewItem startupView = new SplitViewItem("Startup", content: () => _gridStartup);
+        splitView.Items.AddRange([processView, startupView]);
+        rootPanel.Children.AddRange([topLabel, bottomLabel, splitView]);
+        this.Content = rootPanel;
+    }
+
+    private void SetupGridProcesses()
+    {
+        _gridProcesses = new DataGridView().With(x =>
         {
             x.BorderWidth = 2f;
             x.BorderColor = Colors.Gray;
             x.Docking = Dock.Fill;
         });
-        SplitViewItem processView = new SplitViewItem("Processes", content: () => _dataGridView);
-        SplitViewItem startupView = new SplitViewItem("Startup", content: () => _dataGridView);
-        splitView.Items.AddRange([processView, startupView]);
-        _dataGridView.Columns.AddRange(
+        _gridProcesses.Columns.AddRange(
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).ProcessId, Header = nameof(ProcessData.ProcessId) },
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).ProcessName, Header = nameof(ProcessData.ProcessName) },
             new DataGridViewColumn() { Value = (x) => RamToStr(((ProcessData)x).UsedRam), Header = nameof(ProcessData.UsedRam) },
@@ -60,7 +72,19 @@ public partial class MainWindow
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).MainWindowTitle, Header = nameof(ProcessData.MainWindowTitle) },
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).MainWindowHandle, Header = nameof(ProcessData.MainWindowHandle) }
         );
-        rootPanel.Children.AddRange([topLabel, bottomLabel, splitView]);
-        this.Content = rootPanel;
+    }
+
+    private void SetupGridStartup()
+    {
+        _gridStartup = new DataGridView().With(x =>
+        {
+            x.BorderWidth = 2f;
+            x.BorderColor = Colors.Gray;
+            x.Docking = Dock.Fill;
+        });
+        _gridStartup.Columns.AddRange(
+            new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).FullPath, Header = nameof(StartupEntry.FullPath) },
+            new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).Arguments, Header = nameof(StartupEntry.Arguments) }
+        );
     }
 }

@@ -14,9 +14,7 @@ namespace ZF_ProcessMonitor;
 
 public partial class MainWindow : Form
 {
-    private DataGridView _dataGridView;
-
-    private int _frame = 1;
+    private long _frame = DateTime.UtcNow.Ticks;
     private System.Timers.Timer _timer;
     private readonly Dictionary<int, ProcessData> _processData = new(100);
 
@@ -62,13 +60,13 @@ public partial class MainWindow : Form
             proc.MainWindowTitle,
             proc.MainWindowHandle,
             _frame);
-        _dataGridView.Items.Add(procData);
+        _gridProcesses.Items.Add(procData);
         _processData.Add(proc.Id, procData);
     }
 
     private void UpdateProcesses()
     {
-        _frame++;
+        _frame = DateTime.UtcNow.Ticks;
         foreach (var proc in Process.GetProcesses())
         {
             if (_processData.TryGetValue(proc.Id, out ProcessData? stored))
@@ -83,31 +81,31 @@ public partial class MainWindow : Form
 
         foreach (var procData in _processData.Values.Where(x => x.Frame < _frame))
         {
-            _dataGridView.Items.Remove(procData);
-            _processData.Remove(procData.ProcessId);
+            this.Invoke(() =>
+            {
+                _gridProcesses.Items.Remove(procData);
+                _processData.Remove(procData.ProcessId);
+            });
         }
     }
 
     private string RamToStr(long ramBytes)
     {
-        const int KB = 1024;
-        const int MB = KB * 1024;
-        const int GB = MB * 1024;
+        const double KB = 1024;
+        const double MB = KB * 1024;
+        const double GB = MB * 1024;
 
         if (ramBytes < KB) return $"{ramBytes} B";
         if (ramBytes < MB)
         {
-            long kb = ramBytes / KB;
-            return $"{kb}.{ramBytes % KB} KB";
+            return $"{ramBytes / KB:F2} KB";
         }
         if (ramBytes < GB)
         {
-            long mb = ramBytes / MB;
-            return $"{mb}.{(ramBytes / KB) % MB} MB";
+            return $"{ramBytes / MB:F2} MB";
         }
 
-        long gb = ramBytes / GB;
-        return $"{gb}.{(ramBytes / MB) % GB} GB";
+        return $"{ramBytes / GB:F2} GB";
     }
 
     protected override void OnClosed(EventArgs e)
