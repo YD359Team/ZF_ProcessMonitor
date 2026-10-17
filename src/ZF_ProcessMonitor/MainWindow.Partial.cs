@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using ZeppelinForms;
 using ZeppelinForms.Core.Collections;
@@ -35,9 +36,11 @@ public partial class MainWindow
             x.Padding = new(2f);
             x.Docking = Dock.Top;
         });
-        Label bottomLabel = new Label().With(x =>
+        LinkLabel bottomLabel = new LinkLabel().With(x =>
         {
             x.Text = "Powered by ZeppelinForms";
+            x.Url = "https://github.com/YD359Team/ZeppelinForms-solution";
+            x.Click += (_, _) => Process.Start(new ProcessStartInfo(x.Url) { UseShellExecute = true });
             x.HorizontalAlignment = HorizontalAlignment.Center;
             x.VerticalAlignment = VerticalAlignment.Center;
             x.Padding = new(2f);
@@ -78,7 +81,8 @@ public partial class MainWindow
         _gridStartup = new DataGridView();
         _gridStartup.Columns.AddRange(
             new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).Source, Header = nameof(StartupEntry.Source), },
-            new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).Name, Header = nameof(StartupEntry.Name) }
+            new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).Name, Header = nameof(StartupEntry.Name) },
+            new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).FullPath, Header = nameof(StartupEntry.FullPath) }
         );
     }
 }

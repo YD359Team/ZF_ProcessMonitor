@@ -21,7 +21,7 @@ internal static class AppSearch
         {
             foreach (var file in Directory.GetFiles(kv.Item2))
             {
-                entries.Add(new(kv.Item1, file));
+                entries.Add(new(kv.Item1, Path.GetFileName(file), Path.Combine(kv.Item2, file)));
             }
         }
         return entries.ToArray();

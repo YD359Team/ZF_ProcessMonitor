@@ -31,7 +31,7 @@ internal static class RegistrySearch
             if (subKey is null) continue;
             foreach (var val in subKey.GetValueNames())
             {
-                entries.Add(new StartupEntry("Registry HKCU", val));
+                entries.Add(new StartupEntry("Registry", val, subKey + val));
             }
             
         }
@@ -42,7 +42,7 @@ internal static class RegistrySearch
             if (subKey is null) continue;
             foreach (var val in subKey.GetValueNames())
             {
-                entries.Add(new StartupEntry("Registry HKLM", val));
+                entries.Add(new StartupEntry("Registry", val, subKey + val));
             }
 
         }

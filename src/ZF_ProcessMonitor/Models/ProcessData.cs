@@ -1,6 +1,6 @@
 ﻿namespace ZF_ProcessMonitor.Models;
 
-public class ProcessData
+public class ProcessData : IEquatable<ProcessData>
 {
     public ProcessData(int processId, string processName, long usedRam, string x64, string mainWindowTitle, nint mainWindowHandle, long frame)
     {
@@ -20,4 +20,14 @@ public class ProcessData
     public string MainWindowTitle { get; set; }
     public nint MainWindowHandle { get; set; }
     public long Frame { get; set; }
+
+    public override int GetHashCode()
+    {
+        return ProcessId.GetHashCode();
+    }
+
+    public bool Equals(ProcessData? other)
+    {
+        return ReferenceEquals(this, other);
+    }
 }
