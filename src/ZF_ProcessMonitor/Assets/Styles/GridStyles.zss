@@ -1,0 +1,7 @@
+﻿DataGridView
+{
+    ShowAlternateRows: true;
+    BorderWidth: 2;
+    BorderColor: gray;
+    Docking: Fill;
+}

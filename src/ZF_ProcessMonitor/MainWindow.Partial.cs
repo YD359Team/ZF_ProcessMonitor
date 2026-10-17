@@ -9,6 +9,7 @@ using ZeppelinForms.Forms.Controls.Base;
 using ZeppelinForms.Forms.Controls.DataGrid;
 using ZeppelinForms.Forms.Controls.Text;
 using ZeppelinForms.Forms.Enums;
+using ZeppelinForms.Forms.Styling;
 using ZF_ProcessMonitor.Models;
 
 namespace ZF_ProcessMonitor;
@@ -45,6 +46,7 @@ public partial class MainWindow
         SplitView splitView = new SplitView().With(x =>
         {
             x.DisplayMode = SplitViewDisplayMode.Inline;
+            x.IsPaneOpen = true;
             x.Docking = Dock.Fill;
         });
 
@@ -55,16 +57,12 @@ public partial class MainWindow
         splitView.Items.AddRange([processView, startupView]);
         rootPanel.Children.AddRange([topLabel, bottomLabel, splitView]);
         this.Content = rootPanel;
+        App.Styles.Load("Styles/GridStyles.zss");
     }
 
     private void SetupGridProcesses()
     {
-        _gridProcesses = new DataGridView().With(x =>
-        {
-            x.BorderWidth = 2f;
-            x.BorderColor = Colors.Gray;
-            x.Docking = Dock.Fill;
-        });
+        _gridProcesses = new DataGridView();
         _gridProcesses.Columns.AddRange(
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).ProcessId, Header = nameof(ProcessData.ProcessId) },
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).ProcessName, Header = nameof(ProcessData.ProcessName) },
@@ -77,12 +75,7 @@ public partial class MainWindow
 
     private void SetupGridStartup()
     {
-        _gridStartup = new DataGridView().With(x =>
-        {
-            x.BorderWidth = 2f;
-            x.BorderColor = Colors.Gray;
-            x.Docking = Dock.Fill;
-        });
+        _gridStartup = new DataGridView();
         _gridStartup.Columns.AddRange(
             new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).Source, Header = nameof(StartupEntry.Source), },
             new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).Name, Header = nameof(StartupEntry.Name) }
