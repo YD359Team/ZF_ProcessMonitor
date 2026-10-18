@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Text;
 using ZeppelinForms;
 using ZeppelinForms.Core.Collections;
+using ZeppelinForms.Drawing;
 using ZeppelinForms.Drawing.Primitives;
 using ZeppelinForms.Forms.Controls;
 using ZeppelinForms.Forms.Controls.Base;
@@ -58,8 +59,12 @@ public partial class MainWindow
 
         SetupGridProcesses();
         SetupGridStartup();
-        SplitViewItem processView = new SplitViewItem("Processes", content: () => _gridProcesses);
-        SplitViewItem startupView = new SplitViewItem("Startup", content: () => _gridStartup);
+        SplitViewItem processView = new SplitViewItem("Processes",
+            icon: IconSource.FromPath("M3 4h18v16H3z M7 15l3-4 3 3 4-6", strokeWidth: 1.5f),
+            content: () => _gridProcesses);
+        SplitViewItem startupView = new SplitViewItem("Startup",
+            icon: IconSource.FromPath("M6 4l13 8-13 8z", strokeWidth: 1.5f),
+            content: () => _gridStartup);
         splitView.Items.AddRange([processView, startupView]);
         rootPanel.Children.AddRange([topLabel, bottomLabel, splitView]);
         this.Content = rootPanel;

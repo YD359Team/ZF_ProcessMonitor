@@ -101,6 +101,7 @@ public partial class MainWindow : Form
                 _processData.Remove(procData.ProcessId);
             }
         });
+        _gridProcesses.Refresh();
     }
 
     protected override void OnClosed(EventArgs e)
