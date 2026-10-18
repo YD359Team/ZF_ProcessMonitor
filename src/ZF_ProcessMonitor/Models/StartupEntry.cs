@@ -20,6 +20,6 @@ public class StartupEntry : IEquatable<StartupEntry>
 
     public bool Equals(StartupEntry? other)
     {
-        return ReferenceEquals(this, other);
+        return other is not null && other.GetHashCode() == this.GetHashCode();
     }
 }

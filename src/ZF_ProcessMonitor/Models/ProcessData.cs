@@ -28,6 +28,6 @@ public class ProcessData : IEquatable<ProcessData>
 
     public bool Equals(ProcessData? other)
     {
-        return ReferenceEquals(this, other);
+        return other is not null && other.ProcessId == this.ProcessId;
     }
 }

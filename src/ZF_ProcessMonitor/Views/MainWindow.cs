@@ -7,16 +7,15 @@ using ZeppelinForms.Forms.Controls.Base;
 using ZeppelinForms.Forms.Controls.DataGrid;
 using ZeppelinForms.Forms.Controls.Text;
 using ZeppelinForms.Forms.Enums;
+using ZF_ProcessMonitor.Logic.Startup;
+using ZF_ProcessMonitor.Logic.Win32API;
 using ZF_ProcessMonitor.Models;
-using ZF_ProcessMonitor.Startup;
-using ZF_ProcessMonitor.Win32API;
 
 namespace ZF_ProcessMonitor;
 
 public partial class MainWindow : Form
 {
     private long _frame = DateTime.UtcNow.Ticks;
-    private System.Timers.Timer _timer;
     private readonly Dictionary<int, ProcessData> _processData = new(100);
 
     public MainWindow()
@@ -94,33 +93,14 @@ public partial class MainWindow : Form
         }
 
         var tempList = _processData.Values.Where(x => x.Frame < _frame).ToList();
-        foreach (var procData in tempList)
+        this.Invoke(() =>
         {
-            this.Invoke(() =>
+            foreach (var procData in tempList)
             {
                 _gridProcesses.Items.Remove(procData);
                 _processData.Remove(procData.ProcessId);
-            });
-        }
-    }
-
-    private string RamToStr(long ramBytes)
-    {
-        const double KB = 1024;
-        const double MB = KB * 1024;
-        const double GB = MB * 1024;
-
-        if (ramBytes < KB) return $"{ramBytes} B";
-        if (ramBytes < MB)
-        {
-            return $"{ramBytes / KB:F2} KB";
-        }
-        if (ramBytes < GB)
-        {
-            return $"{ramBytes / MB:F2} MB";
-        }
-
-        return $"{ramBytes / GB:F2} GB";
+            }
+        });
     }
 
     protected override void OnClosed(EventArgs e)

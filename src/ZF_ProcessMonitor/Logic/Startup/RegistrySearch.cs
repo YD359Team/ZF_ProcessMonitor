@@ -4,21 +4,25 @@ using System.Collections.Generic;
 using System.Text;
 using ZF_ProcessMonitor.Models;
 
-namespace ZF_ProcessMonitor.Startup;
+namespace ZF_ProcessMonitor.Logic.Startup;
 
 internal static class RegistrySearch
 {
     private static readonly string[] HKCU = 
     [
        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
+       "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run",
-       "HKEY_CURRENT_USER\\SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Run"
+       "HKEY_CURRENT_USER\\SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Run",
+       "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run",
     ];
     private static readonly string[] HKLM =
     [
         "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
+        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
         "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run",
-        "SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Run"
+        "SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Run",
+        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run",
     ];
 
     public static StartupEntry[] Find()
@@ -31,7 +35,7 @@ internal static class RegistrySearch
             if (subKey is null) continue;
             foreach (var val in subKey.GetValueNames())
             {
-                entries.Add(new StartupEntry("Registry", val, subKey + val));
+                entries.Add(new StartupEntry("Registry", val, Path.Combine(subKey.Name, val)));
             }
             
         }
@@ -42,7 +46,7 @@ internal static class RegistrySearch
             if (subKey is null) continue;
             foreach (var val in subKey.GetValueNames())
             {
-                entries.Add(new StartupEntry("Registry", val, subKey + val));
+                entries.Add(new StartupEntry("Registry", val, Path.Combine(subKey.Name, val)));
             }
 
         }

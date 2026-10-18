@@ -11,12 +11,14 @@ using ZeppelinForms.Forms.Controls.DataGrid;
 using ZeppelinForms.Forms.Controls.Text;
 using ZeppelinForms.Forms.Enums;
 using ZeppelinForms.Forms.Styling;
+using ZF_ProcessMonitor.Logic;
 using ZF_ProcessMonitor.Models;
 
 namespace ZF_ProcessMonitor;
 
 public partial class MainWindow
 {
+    private System.Timers.Timer _timer;
     private DataGridView _gridProcesses;
     private DataGridView _gridStartup;
 
@@ -32,6 +34,7 @@ public partial class MainWindow
         });
         Label topLabel = new Label().With(x => {
             x.Text = "[ZF] ProcessMonitor";
+            x.HorizontalAlignment = HorizontalAlignment.Left;
             x.Font = ZeppelinForms.Drawing.Font.Default.WithSize(16f);
             x.Padding = new(2f);
             x.Docking = Dock.Top;
@@ -69,7 +72,7 @@ public partial class MainWindow
         _gridProcesses.Columns.AddRange(
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).ProcessId, Header = nameof(ProcessData.ProcessId) },
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).ProcessName, Header = nameof(ProcessData.ProcessName) },
-            new DataGridViewColumn() { Value = (x) => RamToStr(((ProcessData)x).UsedRam), Header = nameof(ProcessData.UsedRam) },
+            new DataGridViewColumn() { Value = (x) => StringHelpers.RamToStr(((ProcessData)x).UsedRam), Header = nameof(ProcessData.UsedRam) },
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).X64, Header = nameof(ProcessData.X64) },
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).MainWindowTitle, Header = nameof(ProcessData.MainWindowTitle) },
             new DataGridViewColumn() { Value = (x) => ((ProcessData)x).MainWindowHandle, Header = nameof(ProcessData.MainWindowHandle) }
