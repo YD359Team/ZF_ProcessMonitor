@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
+﻿using System.Diagnostics;
 using ZeppelinForms;
 using ZeppelinForms.Core.Collections;
 using ZeppelinForms.Drawing;
-using ZeppelinForms.Drawing.Primitives;
 using ZeppelinForms.Forms.Controls;
 using ZeppelinForms.Forms.Controls.Base;
 using ZeppelinForms.Forms.Controls.DataGrid;
 using ZeppelinForms.Forms.Controls.Text;
 using ZeppelinForms.Forms.Enums;
-using ZeppelinForms.Forms.Styling;
 using ZF_ProcessMonitor.Logic;
 using ZF_ProcessMonitor.Models;
 
@@ -19,9 +14,12 @@ namespace ZF_ProcessMonitor;
 
 public partial class MainWindow
 {
-    private System.Timers.Timer _timer;
-    private DataGridView _gridProcesses;
-    private DataGridView _gridStartup;
+    private DispatcherTimer? _timer;
+    private DataGridView _gridProcesses = null!;
+    private DataGridView _gridStartup = null!;
+
+    /// <summary>The processes as the grid shows them: filtered by the search box.</summary>
+    private DataSource<ProcessData> _processView = null!;
 
     private void InitializeComponents()
     {
@@ -57,11 +55,11 @@ public partial class MainWindow
             x.Docking = Dock.Fill;
         });
 
-        SetupGridProcesses();
+        UIElement processesPage = SetupGridProcesses();
         SetupGridStartup();
         SplitViewItem processView = new SplitViewItem("Processes",
             icon: IconSource.FromPath("M3 4h18v16H3z M7 15l3-4 3 3 4-6", strokeWidth: 1.5f),
-            content: () => _gridProcesses);
+            content: () => processesPage);
         SplitViewItem startupView = new SplitViewItem("Startup",
             icon: IconSource.FromPath("M6 4l13 8-13 8z", strokeWidth: 1.5f),
             content: () => _gridStartup);
@@ -71,26 +69,68 @@ public partial class MainWindow
         App.Styles.Load("Styles/GridStyles.zss");
     }
 
-    private void SetupGridProcesses()
+    /// <summary>The processes grid with a search box over it.</summary>
+    private UIElement SetupGridProcesses()
     {
-        _gridProcesses = new DataGridView();
-        _gridProcesses.Columns.AddRange(
-            new DataGridViewColumn() { Value = (x) => ((ProcessData)x).ProcessId, Header = nameof(ProcessData.ProcessId) },
-            new DataGridViewColumn() { Value = (x) => ((ProcessData)x).ProcessName, Header = nameof(ProcessData.ProcessName) },
-            new DataGridViewColumn() { Value = (x) => StringHelpers.RamToStr(((ProcessData)x).UsedRam), Header = nameof(ProcessData.UsedRam) },
-            new DataGridViewColumn() { Value = (x) => ((ProcessData)x).X64, Header = nameof(ProcessData.X64) },
-            new DataGridViewColumn() { Value = (x) => ((ProcessData)x).MainWindowTitle, Header = nameof(ProcessData.MainWindowTitle) },
-            new DataGridViewColumn() { Value = (x) => ((ProcessData)x).MainWindowHandle, Header = nameof(ProcessData.MainWindowHandle) }
-        );
+        // typed columns: no casts, and the numbers sort as numbers — the memory column
+        // used to be text, and "9.50 MB" sorted after "10.20 GB". The header is the
+        // member's name unless one is given
+        _gridProcesses = new DataGridView
+        {
+            SelectionMode = SelectionMode.Extended,   // Ctrl/Shift + click, Ctrl+A, Ctrl+C
+            Columns =
+            {
+                new DataGridViewColumn<ProcessData, int>(x => x.ProcessId) { Width = GridLength.Fixed(90) },
+                new DataGridViewColumn<ProcessData, string>(x => x.ProcessName) { Width = GridLength.Star(2) },
+                new DataGridViewColumn<ProcessData, long>(x => x.UsedRam)
+                {
+                    Width = GridLength.Fixed(110),
+                    Align = HorizontalContentAlignment.Right,
+                    Format = StringHelpers.RamToStr,
+                },
+                new DataGridViewColumn<ProcessData, string>(x => x.Bitness) { Width = GridLength.Fixed(70) },
+                new DataGridViewColumn<ProcessData, string>(x => x.MainWindowTitle) { Width = GridLength.Star(3) },
+                new DataGridViewColumn<ProcessData, nint>(x => x.MainWindowHandle) { Width = GridLength.Fixed(130) },
+            },
+        };
+
+        // the grid shows a view of the collection; the search box filters the view
+        _processView = new DataSource<ProcessData>(_processes);
+        _gridProcesses.DataSource = _processView;
+
+        TextBox search = new TextBox().With(x =>
+        {
+            x.Docking = Dock.Top;
+            x.Margin = new(0, 0, 0, 4);
+        });
+        search.TextChanged += (_, _) =>
+        {
+            string text = search.Text ?? string.Empty;
+
+            _processView.Filter = text.Length == 0
+                ? null
+                : process => process.ProcessName.Contains(text, StringComparison.OrdinalIgnoreCase) ||
+                             process.MainWindowTitle.Contains(text, StringComparison.OrdinalIgnoreCase) ||
+                             process.ProcessId.ToString().StartsWith(text, StringComparison.Ordinal);
+        };
+
+        DockPanel page = new DockPanel();
+        page.Children.AddRange([search, _gridProcesses]);
+
+        return page;
     }
 
     private void SetupGridStartup()
     {
-        _gridStartup = new DataGridView();
-        _gridStartup.Columns.AddRange(
-            new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).Source, Header = nameof(StartupEntry.Source), },
-            new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).Name, Header = nameof(StartupEntry.Name) },
-            new DataGridViewColumn() { Value = (x) => ((StartupEntry)x).FullPath, Header = nameof(StartupEntry.FullPath) }
-        );
+        _gridStartup = new DataGridView
+        {
+            SelectionMode = SelectionMode.Extended,
+            Columns =
+            {
+                new DataGridViewColumn<StartupEntry, string>(x => x.Source),
+                new DataGridViewColumn<StartupEntry, string>(x => x.Name),
+                new DataGridViewColumn<StartupEntry, string>(x => x.FullPath) { Width = GridLength.Star(3) },
+            },
+        };
     }
 }

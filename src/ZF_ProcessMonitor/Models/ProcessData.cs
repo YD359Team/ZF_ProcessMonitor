@@ -2,29 +2,32 @@
 
 public class ProcessData : IEquatable<ProcessData>
 {
-    public ProcessData(int processId, string processName, long usedRam, string x64, string mainWindowTitle, nint mainWindowHandle, long frame)
+    public ProcessData(int processId, string processName, long usedRam, string bitness, string mainWindowTitle, nint mainWindowHandle)
     {
         ProcessId = processId;
         ProcessName = processName;
         UsedRam = usedRam;
-        X64 = x64;
+        Bitness = bitness;
         MainWindowTitle = mainWindowTitle;
         MainWindowHandle = mainWindowHandle;
-        Frame = frame;
     }
 
     public int ProcessId { get; set; }
     public string ProcessName { get; set; }
     public long UsedRam { get; set; }
-    public string X64 { get; set; }
+
+    /// <summary>"x64", "x32", or "N/A" when the process can't be opened.</summary>
+    public string Bitness { get; set; }
+
     public string MainWindowTitle { get; set; }
     public nint MainWindowHandle { get; set; }
-    public long Frame { get; set; }
 
     public override int GetHashCode()
     {
         return ProcessId.GetHashCode();
     }
+
+    public override bool Equals(object? obj) => Equals(obj as ProcessData);
 
     public bool Equals(ProcessData? other)
     {

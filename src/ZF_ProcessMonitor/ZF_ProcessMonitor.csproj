@@ -6,9 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="ZeppelinForms" Version="0.16.1" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="ZeppelinForms" Version="0.17.0" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<None Update="Assets\**\*" CopyToOutputDirectory="PreserveNewest" />

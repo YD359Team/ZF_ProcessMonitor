@@ -1,12 +1,6 @@
-﻿using System.Diagnostics;
-using ZeppelinForms.Core.Collections;
-using ZeppelinForms.Drawing.Primitives;
+﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 using ZeppelinForms.Forms;
-using ZeppelinForms.Forms.Controls;
-using ZeppelinForms.Forms.Controls.Base;
-using ZeppelinForms.Forms.Controls.DataGrid;
-using ZeppelinForms.Forms.Controls.Text;
-using ZeppelinForms.Forms.Enums;
 using ZF_ProcessMonitor.Logic.Startup;
 using ZF_ProcessMonitor.Logic.Win32API;
 using ZF_ProcessMonitor.Models;
@@ -15,8 +9,15 @@ namespace ZF_ProcessMonitor;
 
 public partial class MainWindow : Form
 {
-    private long _frame = DateTime.UtcNow.Ticks;
+    /// <summary>The processes the grid shows: a collection it follows through its
+    /// DataSource. Changed on the UI thread only — the snapshot is taken on a worker
+    /// and applied here.</summary>
+    private readonly ObservableCollection<ProcessData> _processes = [];
+
     private readonly Dictionary<int, ProcessData> _processData = new(100);
+
+    /// <summary>A snapshot is being taken: a slow one is not overlapped by the next tick.</summary>
+    private bool _updating;
 
     public MainWindow()
     {
@@ -24,83 +25,125 @@ public partial class MainWindow : Form
         this.Shown += MainWindow_Shown;
     }
 
-    private void MainWindow_Shown(object? sender, EventArgs e)
+    private async void MainWindow_Shown(object? sender, EventArgs e)
     {
-        FirstProcessFind();
         UpdateStartups();
-        _timer = new(TimeSpan.FromSeconds(1));
-        _timer.Elapsed += (_, _) => UpdateProcesses();
+
+        await UpdateProcessesAsync();
+
+        // ticks on the UI thread: no Invoke, and no tick after the window closed
+        _timer = new DispatcherTimer(this) { Interval = TimeSpan.FromSeconds(1) };
+        _timer.Tick += async (_, _) => await UpdateProcessesAsync();
         _timer.Start();
     }
 
     private void UpdateStartups()
     {
-        this.Invoke(() =>
-        {
-            _gridStartup.Items.AddRange(RegistrySearch.Find());
-            _gridStartup.Items.AddRange(AppSearch.Find());
-        });
+        _gridStartup.DataSource = (StartupEntry[])[.. RegistrySearch.Find(), .. AppSearch.Find()];
     }
 
-    private void FirstProcessFind()
+    private async Task UpdateProcessesAsync()
     {
-        foreach (var proc in Process.GetProcesses())
+        if (_updating) return;
+
+        _updating = true;
+
+        try
         {
-            RegisterProcess(proc);
+            // enumerating processes takes milliseconds: off the UI thread
+            HashSet<int> known = [.. _processData.Keys];
+            List<ProcessSnapshot> snapshot = await Task.Run(() => TakeSnapshot(known));
+
+            Apply(snapshot);
+        }
+        finally
+        {
+            _updating = false;
         }
     }
 
-    private void RegisterProcess(Process proc)
+    /// <summary>What a process is now. Read on a worker: Process objects are disposed
+    /// here — each holds a handle, and one per process per second added up.</summary>
+    private readonly record struct ProcessSnapshot(int Id, string Name, long UsedRam, string? Bitness, string Title, nint Handle);
+
+    private static List<ProcessSnapshot> TakeSnapshot(HashSet<int> known)
     {
-        string x64str;
+        Process[] processes = Process.GetProcesses();
+        List<ProcessSnapshot> snapshot = new(processes.Length);
+
+        foreach (Process proc in processes)
+        {
+            using (proc)
+            {
+                try
+                {
+                    // opening a process for its bitness is the costly part: only for new ones
+                    string? bitness = known.Contains(proc.Id) ? null : BitnessOf(proc);
+
+                    snapshot.Add(new ProcessSnapshot(
+                        proc.Id, proc.ProcessName, proc.WorkingSet64, bitness, proc.MainWindowTitle, proc.MainWindowHandle));
+                }
+                catch (InvalidOperationException)
+                {
+                    // exited between the list and the read
+                }
+            }
+        }
+
+        return snapshot;
+    }
+
+    private static string BitnessOf(Process proc)
+    {
         try
         {
-            _ = Kernel32.IsWow64Process(proc.Handle, out bool x64);
-            x64str = x64 ? "x64" : "x32";
+            // IsWow64Process is true for a 32-bit process on a 64-bit Windows:
+            // it runs under WOW64. It used to be shown the other way round
+            _ = Kernel32.IsWow64Process(proc.Handle, out bool wow64);
+            return wow64 || !Environment.Is64BitOperatingSystem ? "x32" : "x64";
         }
         catch
         {
-            x64str = "N/A";
+            return "N/A";
         }
-        ProcessData procData = new ProcessData(
-            proc.Id,
-            proc.ProcessName,
-            proc.WorkingSet64,
-            x64str,
-            proc.MainWindowTitle,
-            proc.MainWindowHandle,
-            _frame);
-        this.Invoke(() =>
-        {
-            _gridProcesses.Items.Add(procData);
-            _processData.Add(proc.Id, procData);
-        });
     }
 
-    private void UpdateProcesses()
+    /// <summary>The snapshot into the collection: new processes added, gone ones
+    /// removed, the others updated in place.</summary>
+    private void Apply(List<ProcessSnapshot> snapshot)
     {
-        _frame = DateTime.UtcNow.Ticks;
-        foreach (var proc in Process.GetProcesses())
+        HashSet<int> alive = new(snapshot.Count);
+
+        foreach (ProcessSnapshot s in snapshot)
         {
-            if (_processData.TryGetValue(proc.Id, out ProcessData? stored))
+            alive.Add(s.Id);
+
+            if (_processData.TryGetValue(s.Id, out ProcessData? stored))
             {
-                stored.UsedRam = proc.WorkingSet64;
-                stored.Frame = _frame;
+                stored.UsedRam = s.UsedRam;
+                stored.MainWindowTitle = s.Title;
+                stored.MainWindowHandle = s.Handle;
                 continue;
             }
 
-            RegisterProcess(proc);
+            var data = new ProcessData(s.Id, s.Name, s.UsedRam, s.Bitness ?? "N/A", s.Title, s.Handle);
+
+            _processData.Add(s.Id, data);
+            _processes.Add(data);
         }
 
-        var tempList = _processData.Values.Where(x => x.Frame < _frame).ToList();
-        this.Invoke(() =>
+        for (int i = _processes.Count - 1; i >= 0; i--)
         {
-            foreach (var procData in tempList)
-            {
-                _gridProcesses.Items.Remove(procData);
-                _processData.Remove(procData.ProcessId);
-            }
-        });
+            ProcessData data = _processes[i];
+
+            if (alive.Contains(data.ProcessId)) continue;
+
+            _processes.RemoveAt(i);
+            _processData.Remove(data.ProcessId);
+        }
+
+        // the records changed in place and don't tell about it: the grid reads them
+        // again, and sorts again if it is sorted by memory
         _gridProcesses.Refresh();
     }
 
