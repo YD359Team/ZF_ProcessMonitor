@@ -7,11 +7,15 @@
   </PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="ZeppelinForms" Version="0.17.1" />
+		<PackageReference Include="ZeppelinForms" Version="0.19.0" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<None Update="Assets\**\*" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Logic\Commands\" />
 	</ItemGroup>
 
 </Project>

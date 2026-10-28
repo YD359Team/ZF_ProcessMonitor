@@ -9,6 +9,7 @@ using ZeppelinForms.Forms.Controls.Base;
 using ZeppelinForms.Forms.Controls.DataGrid;
 using ZeppelinForms.Forms.Controls.Text;
 using ZeppelinForms.Forms.Enums;
+using ZeppelinForms.Forms.Styling;
 using ZF_ProcessMonitor.Logic;
 using ZF_ProcessMonitor.Models;
 
@@ -68,7 +69,11 @@ public partial class MainWindow
         splitView.Items.AddRange([processView, startupView]);
         rootPanel.Children.AddRange([topLabel, bottomLabel, splitView]);
         this.Content = rootPanel;
-        App.Styles.Load("Styles/GridStyles.zss");
+
+        // the sheet is copied to Assets/ next to the executable: LoadAsset looks for it there.
+        // Styles.Load takes a relative path from the current directory — the sheet wasn't
+        // found, and was skipped with only a line in the debugger's output
+        App.Styles.Add(StyleSheet.LoadAsset("Styles/GridStyles.zss"));
     }
 
     /// <summary>The processes grid with a search box over it.</summary>
@@ -104,6 +109,7 @@ public partial class MainWindow
         {
             x.Docking = Dock.Top;
             x.Margin = new(0, 0, 0, 4);
+            x.Watermark = "Search...";
         });
         search.TextChanged += (_, _) =>
         {
